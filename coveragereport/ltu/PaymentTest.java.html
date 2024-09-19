@@ -5,25 +5,26 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 
 import org.junit.Test;
+import org.junit.Before;
 
 import static ltu.CalendarFactory.getCalendar;
 
 
-<span class="fc" id="L12">public class PaymentTest</span>
+<span class="fc" id="L13">public class PaymentTest</span>
 {
     PaymentImpl payment;
-    @Test
+    @Before
     public void newPaymentObject()throws IOException{
-<span class="fc" id="L17">        payment = new PaymentImpl(getCalendar());</span>
-<span class="fc" id="L18">    }</span>
+<span class="fc" id="L18">         payment = new PaymentImpl(getCalendar());</span>
+<span class="fc" id="L19">    }</span>
 
 
     @Test
     public void testNextPaymentDay() 
     {
-<span class="nc" id="L24">        assertEquals(&quot;20240930&quot;, payment.getNextPaymentDay());</span>
+<span class="fc" id="L25">        assertEquals(&quot;20240930&quot;, payment.getNextPaymentDay());</span>
         
-<span class="nc" id="L26">    }</span>
+<span class="fc" id="L27">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

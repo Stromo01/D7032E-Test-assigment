@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 
 import org.junit.Test;
+import org.junit.Before;
 
 import static ltu.CalendarFactory.getCalendar;
 
@@ -12,9 +13,9 @@ import static ltu.CalendarFactory.getCalendar;
 public class PaymentTest
 {
     PaymentImpl payment;
-    @Test
+    @Before
     public void newPaymentObject()throws IOException{
-        payment = new PaymentImpl(getCalendar());
+         payment = new PaymentImpl(getCalendar());
     }
 
 
