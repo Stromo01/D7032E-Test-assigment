@@ -40,6 +40,15 @@ public class PaymentTest
         int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
         assertEquals(0, amount); // Expecting zero amount for over age limit for subsidy
     }
+    @Test
+    public void testGetMonthlyAmountOverAgeLimitByALotForSubsidy() {
+        String personId = "1900010100000"; // Age 124, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Expecting zero amount for over age limit for subsidy
+    }
 
     @Test
     public void testNextPaymentDay() {
