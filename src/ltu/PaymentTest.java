@@ -22,6 +22,24 @@ public class PaymentTest
     public void newPaymentObject() throws IOException {
         payment = new PaymentImpl(getCalendar());
     }
+    @Test
+    public void testGetMonthlyAmountUnderage() {
+        String personId = "2006010100000"; // Age 18, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Expecting zero amount for underage
+    }
+    @Test
+    public void testGetMonthlyAmountOverAgeLimitForSubsidy() {
+        String personId = "1967010100000"; // Age 57, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Expecting zero amount for over age limit for subsidy
+    }
 
     @Test
     public void testNextPaymentDay() {
@@ -44,26 +62,6 @@ public class PaymentTest
         int studyRate = 100;
         int completionRatio = 100;
         payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
-    }
-
-    @Test
-    public void testGetMonthlyAmountUnderage() {
-        String personId = "2006010100000"; // Age 18, assuming current year is 2024
-        int income = 0;
-        int studyRate = 100;
-        int completionRatio = 100;
-        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
-        assertEquals(0, amount); // Expecting zero amount for underage
-    }
-
-    @Test
-    public void testGetMonthlyAmountOverAgeLimitForSubsidy() {
-        String personId = "1967010100000"; // Age 57, assuming current year is 2024
-        int income = 0;
-        int studyRate = 100;
-        int completionRatio = 100;
-        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
-        assertEquals(0, amount); // Expecting zero amount for over age limit for subsidy
     }
 
     @Test
@@ -125,7 +123,7 @@ public class PaymentTest
         Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
         method.setAccessible(true);
         int age = 24;
-        int income = 90000; // Above limit for full-time study
+        int income = 85814; // Above limit for full-time study
         int studyRate = 100; // Full time
         int completionRatio = 100;
         int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
@@ -133,7 +131,24 @@ public class PaymentTest
         Field zeroSubsidyField = PaymentImpl.class.getDeclaredField("ZERO_SUBSIDY");
         zeroSubsidyField.setAccessible(true);
         int zeroSubsidy = (int) zeroSubsidyField.get(payment);
+
         assertEquals(zeroSubsidy, subsidy); // Expecting zero subsidy for high income full-time
+    }
+    @Test
+    public void testGetSubsidyHighIncomeLimitFullTime() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24;
+        int income = 85813; // on limit for full-time study
+        int studyRate = 100; // Full time
+        int completionRatio = 100;
+        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        Field fullSubsidyField = PaymentImpl.class.getDeclaredField("FULL_SUBSIDY");
+        fullSubsidyField.setAccessible(true);
+        int fullSubsidy = (int) fullSubsidyField.get(payment);
+
+        assertEquals(fullSubsidy, subsidy); // Expecting zero subsidy for high income full-time
     }
 
     @Test
@@ -141,7 +156,7 @@ public class PaymentTest
         Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
         method.setAccessible(true);
         int age = 24;
-        int income = 130000; // Above limit for less than full-time study
+        int income = 128723; // Above limit for less than full-time study
         int studyRate = 50;
         int completionRatio = 100;
         int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
@@ -151,6 +166,22 @@ public class PaymentTest
         int zeroSubsidy = (int) zeroSubsidyField.get(payment);
 
         assertEquals(zeroSubsidy, subsidy); // Expecting zero subsidy for high income less than full-time
+    }
+    @Test
+    public void testGetSubsidyHighIncomeLimitLessThanFullTime() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24;
+        int income = 128721; // On limit for less than full-time study
+        int studyRate = 50;
+        int completionRatio = 100;
+        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        Field halfSubsidyField = PaymentImpl.class.getDeclaredField("HALF_SUBSIDY");
+        halfSubsidyField.setAccessible(true);
+        int halfSubsidy = (int) halfSubsidyField.get(payment);
+
+        assertEquals(halfSubsidy, subsidy); // Expecting zero subsidy for high income less than full-time
     }
 
     @Test
@@ -209,7 +240,7 @@ public class PaymentTest
         Method method = PaymentImpl.class.getDeclaredMethod("getLoan", int.class, int.class, int.class, int.class);
         method.setAccessible(true);
         int age = 24;
-        int income = 90000; // Above limit for full-time study
+        int income = 85814; // Above limit for full-time study
         int studyRate = 100;
         int completionRatio = 100;
         int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);
@@ -220,13 +251,29 @@ public class PaymentTest
 
         assertEquals(zeroLoan, loan); // Expecting zero loan for high income full-time
     }
+    @Test
+    public void testGetLoanHighIncomeLimitFullTime() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getLoan", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24;
+        int income = 85813; // Above limit for full-time study
+        int studyRate = 100;
+        int completionRatio = 100;
+        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        Field fullLoanField = PaymentImpl.class.getDeclaredField("FULL_LOAN");
+        fullLoanField.setAccessible(true);
+        int fullLoan = (int) fullLoanField.get(payment);
+
+        assertEquals(fullLoan, loan); // Expecting zero loan for high income full-time
+    }
 
     @Test
     public void testGetLoanHighIncomeLessThanFullTime() throws Exception {
         Method method = PaymentImpl.class.getDeclaredMethod("getLoan", int.class, int.class, int.class, int.class);
         method.setAccessible(true);
         int age = 24; 
-        int income = 130000; // Above limit for less than full-time study
+        int income = 128723; // Above limit for less than full-time study
         int studyRate = 50;
         int completionRatio = 100;
         int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);
@@ -236,6 +283,22 @@ public class PaymentTest
         int zeroLoan = (int) zeroLoanField.get(payment);
 
         assertEquals(zeroLoan, loan); // Expecting zero loan for high income less than full-time
+    }
+    @Test
+    public void testGetLoanHighIncomeLimitLessThanFullTime() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getLoan", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24; 
+        int income = 128722; // Above limit for less than full-time study
+        int studyRate = 50;
+        int completionRatio = 100;
+        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        Field halfLoanField = PaymentImpl.class.getDeclaredField("HALF_LOAN");
+        halfLoanField.setAccessible(true);
+        int halfLoan = (int) halfLoanField.get(payment);
+
+        assertEquals(halfLoan, loan); // Expecting zero loan for high income less than full-time
     }
 
     @Test
@@ -364,7 +427,7 @@ public class PaymentTest
 
         assertEquals(halfSubsidy, subsidy);
     }
-    
+
     @Test
     public void testPaymentDate() {
         LocalDate now = LocalDate.now();
@@ -377,4 +440,156 @@ public class PaymentTest
         String expectedPaymentDate = lastDayOfMonth.toString().replace("-", "");
         assertEquals(expectedPaymentDate, payment.getNextPaymentDay());
     }
+    @Test
+    public void testGetMonthlyAmountBoundaryAge20() {
+        String personId = "2004010100000"; // Age 20, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertTrue(amount > 0); // Should be eligible
+    }
+
+    @Test
+    public void testGetMonthlyAmountBoundaryAge47() {
+        String personId = "1977010100000"; // Age 47, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(2816, amount); // Expecting zero loan + subsidy
+    }
+
+    @Test
+    public void testGetMonthlyAmountBoundaryAge56() {
+        String personId = "1968010100000"; // Age 56, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertTrue(amount > 0); // Should be eligible
+    }
+
+    @Test
+    public void testGetMonthlyAmountStudyRate25() {
+        String personId = "2000010100000"; 
+        int income = 0;
+        int studyRate = 25; // Less than half time
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Should not be eligible
+    }
+
+    @Test
+    public void testGetMonthlyAmountStudyRate75() {
+        String personId = "2000010100000"; 
+        int income = 0;
+        int studyRate = 75; // More than half time but less than full time
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertTrue(amount > 0); // Should be eligible
+    }
+
+    @Test
+    public void testGetMonthlyAmountIncomeBelowThresholdFullTime() {
+        String personId = "2000010100000"; 
+        int income = 85000; // Just below the threshold for full-time study
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertTrue(amount > 0); // Should be eligible
+    }
+
+    @Test
+    public void testGetMonthlyAmountIncomeAboveThresholdFullTime() {
+        String personId = "2000010100000"; 
+        int income = 86000; // Just above the threshold for full-time study
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Should not be eligible
+    }
+
+    @Test
+    public void testGetMonthlyAmountIncomeBelowThresholdPartTime() {
+        String personId = "2000010100000"; 
+        int income = 128000; // Just below the threshold for part-time study
+        int studyRate = 50;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertTrue(amount > 0); // Should be eligible
+    }
+
+    @Test
+    public void testGetMonthlyAmountIncomeAboveThresholdPartTime() {
+        String personId = "2000010100000"; 
+        int income = 129000; // Just above the threshold for part-time study
+        int studyRate = 50;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Should not be eligible
+    }
+
+    @Test
+    public void testGetMonthlyAmountCompletionRatio50() {
+        String personId = "2000010100000"; 
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 50; // Boundary completion ratio
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertTrue(amount > 0); // Should be eligible
+    }
+
+    @Test
+    public void testGetMonthlyAmountCompletionRatio49() {
+        String personId = "2000010100000"; 
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 49; // Just below the boundary completion ratio
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Should not be eligible
+    }
+    @Test
+    public void testGetMonthlyAmountCompletionRatio51() {
+        String personId = "2000010100000"; 
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 51; // Just abowe the boundary completion ratio
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(2816+7088, amount);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountNullPersonId() {
+        String personId = null;
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountShortPersonId() {
+        String personId = "1234";
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);}
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountNegativeStudyRate() {
+        String personId = "2000010100000"; 
+        int income = 0;
+        int studyRate = -1;
+        int completionRatio = 100;
+        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);}
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountNegativeCompletionRatio() {
+        String personId = "2000010100000"; 
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = -1;
+        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);}
+
 }
