@@ -1,3 +1,4 @@
+
 package ltu;
 
 import static java.lang.Integer.parseInt;
@@ -11,7 +12,6 @@ import java.io.InputStreamReader;
 
 public class Main
 {
-
     public static void main(String[] args) throws IOException
     {
 
@@ -20,7 +20,6 @@ public class Main
             System.out.println("Usage ltu.Main <inputfile> [optional: calendarClass]");
             System.exit(-1);
         }
-
 
         PaymentImpl payment;
         if(args.length > 1) {
