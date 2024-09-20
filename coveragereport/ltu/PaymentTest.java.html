@@ -3,28 +3,91 @@
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import org.junit.Test;
 import org.junit.Before;
 
 import static ltu.CalendarFactory.getCalendar;
 
-
-<span class="fc" id="L13">public class PaymentTest</span>
+<span class="fc" id="L14">public class PaymentTest</span>
 {
     PaymentImpl payment;
-    @Before
-    public void newPaymentObject()throws IOException{
-<span class="fc" id="L18">         payment = new PaymentImpl(getCalendar());</span>
-<span class="fc" id="L19">    }</span>
 
+
+    @Before
+    public void newPaymentObject() throws IOException {
+<span class="fc" id="L21">        payment = new PaymentImpl(getCalendar());</span>
+<span class="fc" id="L22">        System.out.println(&quot;---------------------------------------&quot;);</span>
+<span class="fc" id="L23">    }</span>
 
     @Test
-    public void testNextPaymentDay() 
-    {
-<span class="fc" id="L25">        assertEquals(&quot;20240930&quot;, payment.getNextPaymentDay());</span>
-        
-<span class="fc" id="L27">    }</span>
+    public void testNextPaymentDay() {
+<span class="fc" id="L27">        assertEquals(&quot;20240930&quot;, payment.getNextPaymentDay());</span>
+<span class="fc" id="L28">    }</span>
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountInvalidPersonId() {
+<span class="fc" id="L32">        String personId = &quot;invalid&quot;;</span>
+<span class="fc" id="L33">        int income = 50000;</span>
+<span class="fc" id="L34">        int studyRate = 100;</span>
+<span class="fc" id="L35">        int completionRatio = 100;</span>
+<span class="nc" id="L36">        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="nc" id="L37">    }</span>
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountNegativeIncome() {
+<span class="fc" id="L41">        String personId = &quot;200001010000&quot;;</span>
+<span class="fc" id="L42">        int income = -1;</span>
+<span class="fc" id="L43">        int studyRate = 100;</span>
+<span class="fc" id="L44">        int completionRatio = 100;</span>
+<span class="nc" id="L45">        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="nc" id="L46">    }</span>
+
+    @Test
+    public void testGetAge() throws Exception {
+<span class="fc" id="L50">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getAge&quot;, String.class);</span>
+<span class="fc" id="L51">        method.setAccessible(true);</span>
+<span class="fc" id="L52">        String personId = &quot;20000101-0000&quot;;</span>
+
+<span class="fc" id="L54">        int age = (int) method.invoke(payment, personId);</span>
+
+<span class="fc" id="L56">        assertEquals(24, age); // Assuming the current year is 2024</span>
+<span class="fc" id="L57">    }</span>
+
+    @Test
+    public void testGetLoan() throws Exception {
+<span class="fc" id="L61">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L62">        method.setAccessible(true);</span>
+<span class="fc" id="L63">        int age = 24;</span>
+<span class="fc" id="L64">        int income = 50000;</span>
+<span class="fc" id="L65">        int studyRate = 100;</span>
+<span class="fc" id="L66">        int completionRatio = 100;</span>
+<span class="fc" id="L67">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L69">        Field fullLoanField = PaymentImpl.class.getDeclaredField(&quot;FULL_LOAN&quot;);</span>
+<span class="fc" id="L70">        fullLoanField.setAccessible(true);</span>
+<span class="fc" id="L71">        int fullLoan = (int) fullLoanField.get(payment);</span>
+
+<span class="fc" id="L73">        assertEquals(fullLoan, loan);</span>
+<span class="fc" id="L74">    }</span>
+
+    @Test
+    public void testGetSubsidy() throws Exception {
+<span class="fc" id="L78">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L79">        method.setAccessible(true);</span>
+<span class="fc" id="L80">        int age = 24;</span>
+<span class="fc" id="L81">        int income = 50000;</span>
+<span class="fc" id="L82">        int studyRate = 100;</span>
+<span class="fc" id="L83">        int completionRatio = 100;</span>
+<span class="fc" id="L84">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L86">        Field fullSubsidyField = PaymentImpl.class.getDeclaredField(&quot;FULL_SUBSIDY&quot;);</span>
+<span class="fc" id="L87">        fullSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L88">        int fullSubsidy = (int) fullSubsidyField.get(payment);</span>
+
+<span class="fc" id="L90">        assertEquals(fullSubsidy, subsidy);</span>
+<span class="fc" id="L91">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

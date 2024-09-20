@@ -15,9 +15,11 @@ public class PaymentTest
 {
     PaymentImpl payment;
 
+
     @Before
     public void newPaymentObject() throws IOException {
         payment = new PaymentImpl(getCalendar());
+        System.out.println("---------------------------------------");
     }
 
     @Test
@@ -47,8 +49,10 @@ public class PaymentTest
     public void testGetAge() throws Exception {
         Method method = PaymentImpl.class.getDeclaredMethod("getAge", String.class);
         method.setAccessible(true);
-        String personId = "200001010000";
+        String personId = "20000101-0000";
+
         int age = (int) method.invoke(payment, personId);
+
         assertEquals(24, age); // Assuming the current year is 2024
     }
 
