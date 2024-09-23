@@ -65,7 +65,7 @@ public class PaymentTest
         int studyRate = 100;
         int completionRatio = 100;
         int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
-        assertEquals(9904, amount); // Expecting 9904 for in age limit for subsidy
+        assertEquals(9904, amount); // Expecting 2816 for in age limit for subsidy
     }
 
     @Test
