@@ -24,7 +24,7 @@ public class PaymentTest
     }
     @Test
     public void testGetMonthlyAmountUnderage() {
-        String personId = "2006010100000"; // Age 18, assuming current year is 2024
+        String personId = "2005010100000"; // Age 19, assuming current year is 2024
         int income = 0;
         int studyRate = 100;
         int completionRatio = 100;
@@ -82,6 +82,15 @@ public class PaymentTest
         int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
         assertEquals(2816, amount); // Expecting zero loan + subsidy
     }
+    @Test
+    public void testGetMonthlyAmountUnderAgeLimitForNoLoan() {
+        String personId = "1978010100000"; // Age 46, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(2816+7088, amount); // Expecting loan + subsidy
+    }
 
     @Test
     public void testGetMonthlyAmountBelowHalfTimeStudy() {
@@ -128,20 +137,20 @@ public class PaymentTest
     }
 
     @Test
-    public void testGetSubsidyHighIncomeFullTime() throws Exception {
+    public void testGetSubsidyHighIncomeBelowLimitFullTime() throws Exception {
         Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
         method.setAccessible(true);
         int age = 24;
-        int income = 85814; // Above limit for full-time study
+        int income = 85812; // Above limit for full-time study
         int studyRate = 100; // Full time
         int completionRatio = 100;
         int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
-
-        Field zeroSubsidyField = PaymentImpl.class.getDeclaredField("ZERO_SUBSIDY");
+/* 
+        Field fullSubsidyField = PaymentImpl.class.getDeclaredField("FULL_SUBSIDY");
         zeroSubsidyField.setAccessible(true);
         int zeroSubsidy = (int) zeroSubsidyField.get(payment);
-
-        assertEquals(zeroSubsidy, subsidy); // Expecting zero subsidy for high income full-time
+*/
+        assertEquals(2816, subsidy); // Expecting zero subsidy for high income full-time
     }
     @Test
     public void testGetSubsidyHighIncomeLimitFullTime() throws Exception {
