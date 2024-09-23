@@ -25,7 +25,7 @@ import java.io.InputStreamReader;
         PaymentImpl payment;
 <span class="nc bnc" id="L26" title="All 2 branches missed.">        if(args.length &gt; 1) {</span>
 <span class="nc" id="L27">                payment = new PaymentImpl(getCalendar(args[1]));</span>
-        } else {
+<span class="nc" id="L28">        } else {</span>
 <span class="nc" id="L29">                payment = new PaymentImpl(getCalendar());</span>
         }
 
@@ -52,7 +52,7 @@ import java.io.InputStreamReader;
 <span class="nc" id="L52">            int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
 <span class="nc" id="L53">            String paymentDate = payment.getNextPaymentDay();</span>
 <span class="nc" id="L54">            System.out.println(line + &quot; =&gt; &quot; + paymentDate + &quot;: &quot; + personId + &quot;: &quot; + amount);</span>
-<span class="nc" id="L55">        }</span>
+        }
 <span class="nc" id="L56">        reader.close();</span>
 <span class="nc" id="L57">    }</span>
 

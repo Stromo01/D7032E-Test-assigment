@@ -49,6 +49,24 @@ public class PaymentTest
         int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
         assertEquals(0, amount); // Expecting zero amount for over age limit for subsidy
     }
+    @Test
+    public void testGetMonthlyAmountInAgeLimitForSubsidy() {
+        String personId = "1968010100000"; // Age 56, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(2816, amount); // Expecting 2816 for in age limit for subsidy
+    }
+    @Test
+    public void testGetMonthlyAmountYoungInAgeLimitForSubsidy() {
+        String personId = "2004010100000"; // Age 20, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(9904, amount); // Expecting 2816 for in age limit for subsidy
+    }
 
     @Test
     public void testNextPaymentDay() {
@@ -91,6 +109,16 @@ public class PaymentTest
         int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
         assertEquals(2816+7088, amount); // Expecting loan + subsidy
     }
+    @Test
+    public void testGetMonthlyAmountYoungInAgeLimitForNoLoan() {
+        String personId = "2004010100000"; // Age 20, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(2816+7088, amount); // Expecting loan + subsidy
+    }
+
 
     @Test
     public void testGetMonthlyAmountBelowHalfTimeStudy() {
