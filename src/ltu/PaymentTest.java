@@ -486,6 +486,7 @@ public class PaymentTest
         String expectedPaymentDate = lastDayOfMonth.toString().replace("-", "");
         assertEquals(expectedPaymentDate, payment.getNextPaymentDay());
     }
+
     @Test
     public void testGetMonthlyAmountBoundaryAge20() {
         String personId = "2004010100000"; // Age 20, assuming current year is 2024
