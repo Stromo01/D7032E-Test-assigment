@@ -23,6 +23,15 @@ public class PaymentTest
         payment = new PaymentImpl(getCalendar());
     }
     @Test
+    public void testGetLoa() {
+        String personId = "2005010100000"; // Age 19, assuming current year is 2024
+        int income = 0;
+        int studyRate = 100;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Expecting zero amount for underage
+    }
+    @Test
     public void testGetMonthlyAmountUnderage() {
         String personId = "2005010100000"; // Age 19, assuming current year is 2024
         int income = 0;
@@ -146,6 +155,22 @@ public class PaymentTest
 
         assertEquals(halfSubsidy, subsidy); // 50% subsidiary
     }
+    @Test
+    public void testGetSubsidy99TimeStudy() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24; 
+        int income = 0;
+        int studyRate = 99; // less than full
+        int completionRatio = 100;
+        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        Field halfSubsidyField = PaymentImpl.class.getDeclaredField("HALF_SUBSIDY");
+        halfSubsidyField.setAccessible(true);
+        int halfSubsidy = (int) halfSubsidyField.get(payment);
+
+        assertEquals(halfSubsidy, subsidy); // 50% subsidiary
+    }
 
     @Test
     public void testGetSubsidyFullTimeStudy() throws Exception {
@@ -169,7 +194,7 @@ public class PaymentTest
         Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
         method.setAccessible(true);
         int age = 24;
-        int income = 85812; // Above limit for full-time study
+        int income = 85812; // Under limit for full-time study
         int studyRate = 100; // Full time
         int completionRatio = 100;
         int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
@@ -178,7 +203,7 @@ public class PaymentTest
         zeroSubsidyField.setAccessible(true);
         int zeroSubsidy = (int) zeroSubsidyField.get(payment);
 */
-        assertEquals(2816, subsidy); // Expecting zero subsidy for high income full-time
+        assertEquals(2816, subsidy); // Expecting  subsidy for low income full-time
     }
     @Test
     public void testGetSubsidyHighIncomeLimitFullTime() throws Exception {
@@ -194,7 +219,19 @@ public class PaymentTest
         fullSubsidyField.setAccessible(true);
         int fullSubsidy = (int) fullSubsidyField.get(payment);
 
-        assertEquals(fullSubsidy, subsidy); // Expecting zero subsidy for high income full-time
+        assertEquals(fullSubsidy, subsidy); // Expecting  subsidy for high income full-time
+    }
+    @Test
+    public void testGetSubsidyHighIncomeOverLimitFullTime() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24;
+        int income = 85814; // over limit for full-time study
+        int studyRate = 100; // Full time
+        int completionRatio = 100;
+        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        assertEquals(0, subsidy); // Expecting zero subsidy for high income full-time
     }
 
     @Test
