@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="sv"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaymentImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CodeCoverageReport</a> &gt; <a href="index.source.html" class="el_package">ltu</a> &gt; <span class="el_source">PaymentImpl.java</span></div><h1>PaymentImpl.java</h1><pre class="source lang-java linenums">package ltu;
 
-import static java.lang.Integer.parseInt;
-
 import java.io.IOException;
 import java.io.StringReader;
+import static java.lang.Integer.parseInt;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -25,119 +24,119 @@ public class PaymentImpl implements IPayment
     private final Properties props;
 
     public PaymentImpl(ICalendar calendar) throws IOException
-    {
-<span class="fc" id="L29">        this(calendar, DEFAULT_RULES);</span>
-<span class="fc" id="L30">    }</span>
-
-    public PaymentImpl(ICalendar cal, String rules) throws IOException
-<span class="fc" id="L33">    {</span>
-<span class="fc" id="L34">        calendar = cal;</span>
-<span class="fc" id="L35">        props = new Properties();</span>
-        try
-        {
-<span class="fc" id="L38">            props.load(new StringReader(rules));</span>
-<span class="nc" id="L39">        } catch (IOException e)</span>
-        {
-<span class="nc" id="L41">            e.printStackTrace();</span>
-<span class="nc" id="L42">            throw e;</span>
-<span class="fc" id="L43">        }</span>
-<span class="fc" id="L44">        FULL_LOAN = parseInt((String) props.get(&quot;student100loan&quot;));</span>
-<span class="fc" id="L45">        HALF_LOAN = parseInt((String) props.get(&quot;student50loan&quot;));</span>
-<span class="fc" id="L46">        ZERO_LOAN = parseInt((String) props.get(&quot;student0loan&quot;));</span>
-<span class="fc" id="L47">        FULL_SUBSIDY = parseInt((String) props.get(&quot;student100subsidy&quot;));</span>
-<span class="fc" id="L48">        HALF_SUBSIDY = parseInt((String) props.get(&quot;student50subsidy&quot;));</span>
-<span class="fc" id="L49">        ZERO_SUBSIDY = parseInt((String) props.get(&quot;student0subsidy&quot;));</span>
-<span class="fc" id="L50">        FULLTIME_INCOME = parseInt((String) props.get(&quot;fulltimeIncome&quot;));</span>
-<span class="fc" id="L51">        PARTTIME_INCOME = parseInt((String) props.get(&quot;parttimeIncome&quot;));</span>
-<span class="fc" id="L52">    }</span>
-
-    @Override
-    public String getNextPaymentDay()
-    {
-<span class="fc" id="L57">    	DateFormat format = new SimpleDateFormat(&quot;yyyyMMdd&quot;);</span>
-<span class="fc" id="L58">    	Calendar cal = Calendar.getInstance();</span>
-<span class="fc" id="L59">        cal.setTime(calendar.getDate());</span>
-<span class="fc" id="L60">        cal.set(Calendar.DATE, cal.getActualMaximum(Calendar.DAY_OF_MONTH));</span>
-<span class="fc" id="L61">        int weekDay = cal.get(Calendar.DAY_OF_WEEK);</span>
-<span class="pc bpc" id="L62" title="1 of 2 branches missed.">        if (weekDay == Calendar.SUNDAY)</span>
-        {
-<span class="nc" id="L64">            cal.add(Calendar.DATE, -2);</span>
-
-<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        } else if (weekDay == Calendar.SATURDAY)</span>
-        {
-<span class="nc" id="L68">            cal.add(Calendar.DATE, -1);</span>
-
-        }
-<span class="fc" id="L71">        return format.format(cal.getTime());</span>
+<span class="fc" id="L27">    {</span>
+        this(calendar, DEFAULT_RULES);
     }
 
-    @Override
-    public int getMonthlyAmount(String personId, int income, int studyRate, int completionRatio)
-            throws IllegalArgumentException
-    {
-<span class="nc bnc" id="L78" title="All 8 branches missed.">        if (personId == null || income &lt; 0 || studyRate &lt; 0 || completionRatio &lt; 0)</span>
+<span class="fc" id="L31">    public PaymentImpl(ICalendar cal, String rules) throws IOException</span>
+<span class="fc" id="L32">    {</span>
+        calendar = cal;
+        props = new Properties();
+<span class="fc" id="L35">        try</span>
+<span class="fc" id="L36">        {</span>
+<span class="fc" id="L37">            props.load(new StringReader(rules));</span>
+        } catch (IOException e)
         {
-<span class="nc" id="L80">            throw new IllegalArgumentException(&quot;Invalid input.&quot;);</span>
+<span class="fc" id="L40">            e.printStackTrace();</span>
+<span class="nc" id="L41">            throw e;</span>
         }
-<span class="nc" id="L82">        int age = getAge(personId);</span>
-<span class="nc" id="L83">        int amount = getLoan(age, income, studyRate, completionRatio);</span>
-<span class="nc" id="L84">        amount += getSubsidy(age, income, studyRate, completionRatio);</span>
-<span class="nc" id="L85">        return amount;</span>
+<span class="nc" id="L43">        FULL_LOAN = parseInt((String) props.get(&quot;student100loan&quot;));</span>
+<span class="nc" id="L44">        HALF_LOAN = parseInt((String) props.get(&quot;student50loan&quot;));</span>
+<span class="fc" id="L45">        ZERO_LOAN = parseInt((String) props.get(&quot;student0loan&quot;));</span>
+<span class="fc" id="L46">        FULL_SUBSIDY = parseInt((String) props.get(&quot;student100subsidy&quot;));</span>
+<span class="fc" id="L47">        HALF_SUBSIDY = parseInt((String) props.get(&quot;student50subsidy&quot;));</span>
+<span class="fc" id="L48">        ZERO_SUBSIDY = parseInt((String) props.get(&quot;student0subsidy&quot;));</span>
+<span class="fc" id="L49">        FULLTIME_INCOME = parseInt((String) props.get(&quot;fulltimeIncome&quot;));</span>
+<span class="fc" id="L50">        PARTTIME_INCOME = parseInt((String) props.get(&quot;parttimeIncome&quot;));</span>
+<span class="fc" id="L51">    }</span>
+<span class="fc" id="L52"></span>
+<span class="fc" id="L53">    @Override</span>
+<span class="fc" id="L54">    public String getNextPaymentDay()</span>
+    {
+    	DateFormat format = new SimpleDateFormat(&quot;yyyyMMdd&quot;);
+    	Calendar cal = Calendar.getInstance();
+        cal.setTime(calendar.getDate());
+<span class="fc" id="L59">        cal.set(Calendar.DATE, cal.getActualMaximum(Calendar.DAY_OF_MONTH));</span>
+<span class="fc" id="L60">        int weekDay = cal.get(Calendar.DAY_OF_WEEK);</span>
+<span class="fc" id="L61">        if (weekDay == Calendar.SUNDAY)</span>
+        {
+            cal.add(Calendar.DATE, -2);
+<span class="pc bpc" id="L64" title="1 of 2 branches missed."></span>
+        } else if (weekDay == Calendar.SATURDAY)
+<span class="nc" id="L66">        {</span>
+            cal.add(Calendar.DATE, -1);
+<span class="fc" id="L68"></span>
+        }
+        return format.format(cal.getTime());
+<span class="fc" id="L71">    }</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed."></span>
+    @Override
+<span class="nc" id="L74">    public int getMonthlyAmount(String personId, int income, int studyRate, int completionRatio)</span>
+            throws IllegalArgumentException
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">    {</span>
+        if (personId == null || income &lt; 0 || studyRate &lt; 0 || completionRatio &lt; 0)
+<span class="nc" id="L78">        {</span>
+            throw new IllegalArgumentException(&quot;Invalid input.&quot;);
+        }
+<span class="fc" id="L81">        int age = getAge(personId);</span>
+        int amount = getLoan(age, income, studyRate, completionRatio);
+        amount += getSubsidy(age, income, studyRate, completionRatio);
+        return amount;
     }
 
     private int getAge(String personId)
-    {
-<span class="nc bnc" id="L90" title="All 4 branches missed.">        if (personId == null || personId.length() != 13)</span>
-        {
-<span class="nc" id="L92">            throw new IllegalArgumentException(&quot;Invalid personId: &quot; + personId);</span>
-        }
-<span class="nc" id="L94">        int personYear = parseInt(personId.substring(0, 4));</span>
-<span class="nc" id="L95">        int paymentYear = parseInt(new SimpleDateFormat(&quot;yyyy&quot;).format(calendar.getDate()));</span>
-<span class="nc" id="L96">        int age = paymentYear - personYear;</span>
-<span class="nc" id="L97">        return age;</span>
+<span class="fc bfc" id="L88" title="All 8 branches covered.">    {</span>
+        if (personId == null || personId.length() != 13)
+<span class="fc" id="L90">        {</span>
+            throw new IllegalArgumentException(&quot;Invalid personId: &quot; + personId);
+<span class="fc" id="L92">        }</span>
+<span class="fc" id="L93">        int personYear = parseInt(personId.substring(0, 4));</span>
+<span class="fc" id="L94">        int paymentYear = parseInt(new SimpleDateFormat(&quot;yyyy&quot;).format(calendar.getDate()));</span>
+<span class="fc" id="L95">        int age = paymentYear - personYear;</span>
+        return age;
     }
 
     private int getLoan(int age, int income, int studyRate, int completionRatio)
-    {
-<span class="nc bnc" id="L102" title="All 8 branches missed.">        if (studyRate &lt; 50 || age &lt; 20 || age &gt;= 47 || completionRatio &lt; 50)</span>
-        {
-<span class="nc" id="L104">            return ZERO_LOAN;</span>
+<span class="pc bpc" id="L100" title="1 of 4 branches missed.">    {</span>
+        if (studyRate &lt; 50 || age &lt; 20 || age &gt;= 47 || completionRatio &lt; 50)
+<span class="fc" id="L102">        {</span>
+            return ZERO_LOAN;
+<span class="fc" id="L104">        }</span>
+<span class="fc" id="L105">        if (studyRate &gt;= 100 &amp;&amp; income &gt; FULLTIME_INCOME)</span>
+<span class="fc" id="L106">        {</span>
+<span class="fc" id="L107">            return ZERO_LOAN;</span>
         }
-<span class="nc bnc" id="L106" title="All 4 branches missed.">        if (studyRate &gt;= 100 &amp;&amp; income &gt; FULLTIME_INCOME)</span>
+        if (studyRate &lt; 100 &amp;&amp; income &gt; PARTTIME_INCOME)
         {
-<span class="nc" id="L108">            return ZERO_LOAN;</span>
+            return ZERO_LOAN;
         }
-<span class="nc bnc" id="L110" title="All 4 branches missed.">        if (studyRate &lt; 100 &amp;&amp; income &gt; PARTTIME_INCOME)</span>
+<span class="fc bfc" id="L113" title="All 8 branches covered.">        if (studyRate &lt; 100)</span>
         {
-<span class="nc" id="L112">            return ZERO_LOAN;</span>
+<span class="fc" id="L115">            return HALF_LOAN;</span>
         }
-<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (studyRate &lt; 100)</span>
-        {
-<span class="nc" id="L116">            return HALF_LOAN;</span>
-        }
-<span class="nc" id="L118">        return FULL_LOAN;</span>
-    }
+        return FULL_LOAN;
+<span class="fc bfc" id="L118" title="All 4 branches covered.">    }</span>
 
-    private int getSubsidy(int age, int income, int studyRate, int completionRatio)
+<span class="fc" id="L120">    private int getSubsidy(int age, int income, int studyRate, int completionRatio)</span>
     {
-<span class="nc bnc" id="L123" title="All 8 branches missed.">        if (studyRate &lt; 50 || age &lt; 20 || age &gt; 56 || completionRatio &lt; 50)</span>
+<span class="fc bfc" id="L122" title="All 4 branches covered.">        if (studyRate &lt; 50 || age &lt; 20 || age &gt; 56 || completionRatio &lt; 50)</span>
         {
-<span class="nc" id="L125">            return ZERO_SUBSIDY;</span>
+<span class="fc" id="L124">            return ZERO_SUBSIDY;</span>
         }
-<span class="nc bnc" id="L127" title="All 4 branches missed.">        if (studyRate &gt;= 100 &amp;&amp; income &gt; FULLTIME_INCOME)</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">        if (studyRate &gt;= 100 &amp;&amp; income &gt; FULLTIME_INCOME)</span>
         {
-<span class="nc" id="L129">            return ZERO_SUBSIDY;</span>
+<span class="fc" id="L128">            return ZERO_SUBSIDY;</span>
         }
-<span class="nc bnc" id="L131" title="All 4 branches missed.">        if (studyRate &lt; 100 &amp;&amp; income &gt; PARTTIME_INCOME)</span>
+<span class="fc" id="L130">        if (studyRate &lt; 100 &amp;&amp; income &gt; PARTTIME_INCOME)</span>
         {
-<span class="nc" id="L133">            return ZERO_SUBSIDY;</span>
+            return ZERO_SUBSIDY;
         }
-<span class="nc bnc" id="L135" title="All 2 branches missed.">        if (studyRate &lt; 100)</span>
+        if (studyRate &lt; 100)
         {
-<span class="nc" id="L137">            return HALF_SUBSIDY;</span>
-        }
-<span class="nc" id="L139">        return FULL_SUBSIDY;</span>
-    }
+            return HALF_SUBSIDY;
+<span class="pc bpc" id="L137" title="2 of 8 branches missed.">        }</span>
+        return FULL_SUBSIDY;
+<span class="fc" id="L139">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
