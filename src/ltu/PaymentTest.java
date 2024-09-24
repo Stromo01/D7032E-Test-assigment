@@ -215,7 +215,7 @@ public class PaymentTest
         int age = 24;
         int income = 85813; // on limit for full-time study
         int studyRate = 100; // Full time
-        int completionRatio = 100;
+        int completionRatio = 100;  
         int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
 
         Field fullSubsidyField = PaymentImpl.class.getDeclaredField("FULL_SUBSIDY");
@@ -646,6 +646,24 @@ public class PaymentTest
         String personId = "2000010100000"; 
         int income = 129000; // Just above the threshold for part-time study
         int studyRate = 50;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Should not be eligible
+    }
+    @Test
+    public void testGetMonthlyAmountIncomeAboveThresholdPartTime0Rate() {
+        String personId = "2000010100000"; 
+        int income = 129000; // Just above the threshold for part-time study
+        int studyRate = 0;
+        int completionRatio = 100;
+        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
+        assertEquals(0, amount); // Should not be eligible
+    }
+    @Test
+    public void testGetMonthlyAmountIncomeAboveThresholdPartTime99Rate() {
+        String personId = "2000010100000"; 
+        int income = 129000; // Just above the threshold for part-time study
+        int studyRate = 99;
         int completionRatio = 100;
         int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);
         assertEquals(0, amount); // Should not be eligible
