@@ -147,6 +147,22 @@ public class PaymentTest
 
         assertEquals(halfSubsidy, subsidy); // 50% subsidiary
     }
+    @Test
+    public void testGetSubsidy99StudyRate() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24; 
+        int income = 0;
+        int studyRate = 99; // Half time
+        int completionRatio = 100;
+        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        Field halfSubsidyField = PaymentImpl.class.getDeclaredField("HALF_SUBSIDY");
+        halfSubsidyField.setAccessible(true);
+        int halfSubsidy = (int) halfSubsidyField.get(payment);
+
+        assertEquals(halfSubsidy, subsidy); // 50% subsidiary
+    }
 
     @Test
     public void testGetSubsidyFullTimeStudy() throws Exception {
@@ -155,6 +171,22 @@ public class PaymentTest
         int age = 24;
         int income = 0;
         int studyRate = 100; // Full time
+        int completionRatio = 100;
+        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        Field fullSubsidyField = PaymentImpl.class.getDeclaredField("FULL_SUBSIDY");
+        fullSubsidyField.setAccessible(true);
+        int fullSubsidy = (int) fullSubsidyField.get(payment);
+
+        assertEquals(fullSubsidy, subsidy); // 100% subsidiary
+    }
+    @Test
+    public void testGetSubsidyOverTimeStudy() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24;
+        int income = 0;
+        int studyRate = 110; // Overtime
         int completionRatio = 100;
         int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
 
@@ -183,6 +215,22 @@ public class PaymentTest
         int age = 24;
         int income = 85813; // on limit for full-time study
         int studyRate = 100; // Full time
+        int completionRatio = 100;
+        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        Field fullSubsidyField = PaymentImpl.class.getDeclaredField("FULL_SUBSIDY");
+        fullSubsidyField.setAccessible(true);
+        int fullSubsidy = (int) fullSubsidyField.get(payment);
+
+        assertEquals(fullSubsidy, subsidy); // Expecting zero subsidy for high income full-time
+    }
+    @Test
+    public void testGetSubsidyHighIncomeLimitFullTimeOverTimeRate() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getSubsidy", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24;
+        int income = 85813; // on limit for full-time study
+        int studyRate = 110; // Full time
         int completionRatio = 100;
         int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);
 
@@ -284,6 +332,22 @@ public class PaymentTest
         int age = 24;
         int income = 85814; // Above limit for full-time study
         int studyRate = 100;
+        int completionRatio = 100;
+        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);
+
+        Field zeroLoanField = PaymentImpl.class.getDeclaredField("ZERO_LOAN");
+        zeroLoanField.setAccessible(true);
+        int zeroLoan = (int) zeroLoanField.get(payment);
+
+        assertEquals(zeroLoan, loan); // Expecting zero loan for high income full-time
+    }
+    @Test
+    public void testGetLoanHighIncomeFullTimeOverTimeRate() throws Exception {
+        Method method = PaymentImpl.class.getDeclaredMethod("getLoan", int.class, int.class, int.class, int.class);
+        method.setAccessible(true);
+        int age = 24;
+        int income = 85814; // Above limit for full-time study
+        int studyRate = 110;
         int completionRatio = 100;
         int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);
 
