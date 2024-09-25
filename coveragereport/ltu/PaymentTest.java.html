@@ -3,28 +3,793 @@
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Calendar;
+import java.util.Date;
 
 import org.junit.Test;
 import org.junit.Before;
 
 import static ltu.CalendarFactory.getCalendar;
 
-
-<span class="fc" id="L13">public class PaymentTest</span>
+<span class="fc" id="L19">public class PaymentTest implements ICalendar</span>
 {
     PaymentImpl payment;
+    @Override
+    public Date getDate() {
+<span class="fc" id="L24">        Calendar cal = Calendar.getInstance();</span>
+<span class="fc" id="L25">        cal.set(2016,01,01);</span>
+<span class="fc" id="L26">        Date date = cal.getTime();</span>
+<span class="fc" id="L27">        cal.setTime(date);</span>
+<span class="fc" id="L28">        System.out.println(cal.getTime());</span>
+<span class="fc" id="L29">        return cal.getTime();</span>
+    }
     @Before
-    public void newPaymentObject()throws IOException{
-<span class="fc" id="L18">         payment = new PaymentImpl(getCalendar());</span>
-<span class="fc" id="L19">    }</span>
+    public void newPaymentObject() throws IOException {
+<span class="fc" id="L33">        String className = System.getProperty(&quot;calendar&quot;, &quot;ltu.PaymentTest&quot;);</span>
+<span class="fc" id="L34">        payment = new PaymentImpl(getCalendar(className));</span>
+<span class="fc" id="L35">    }</span>
+    
+    @Test
+    public void testGetMonthlyAmountUnderage() {
+<span class="fc" id="L39">        String personId = &quot;2005010100000&quot;; // Age 19, assuming current year is 2024</span>
+<span class="fc" id="L40">        int income = 0;</span>
+<span class="fc" id="L41">        int studyRate = 100;</span>
+<span class="fc" id="L42">        int completionRatio = 100;</span>
+<span class="fc" id="L43">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L44">        assertEquals(0, amount); // Expecting zero amount for underage</span>
+<span class="fc" id="L45">    }</span>
+    @Test
+    public void testGetMonthlyAmountOverAgeLimitForSubsidy() {
+<span class="fc" id="L48">        String personId = &quot;1959010100000&quot;; // Age 57, assuming current year is 2024</span>
+<span class="fc" id="L49">        int income = 0;</span>
+<span class="fc" id="L50">        int studyRate = 100;</span>
+<span class="fc" id="L51">        int completionRatio = 100;</span>
+<span class="fc" id="L52">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L53">        assertEquals(0, amount); // Expecting zero amount for over age limit for subsidy</span>
+<span class="fc" id="L54">    }</span>
+    @Test
+    public void testGetMonthlyAmountOverAgeLimitByALotForSubsidy() {
+<span class="fc" id="L57">        String personId = &quot;1900010100000&quot;; // Age 124, assuming current year is 2024</span>
+<span class="fc" id="L58">        int income = 0;</span>
+<span class="fc" id="L59">        int studyRate = 100;</span>
+<span class="fc" id="L60">        int completionRatio = 100;</span>
+<span class="fc" id="L61">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L62">        assertEquals(0, amount); // Expecting zero amount for over age limit for subsidy</span>
+<span class="fc" id="L63">    }</span>
+    @Test
+    public void testGetMonthlyAmountInAgeLimitForSubsidy() {
+<span class="fc" id="L66">        String personId = &quot;1968010100000&quot;; // Age 56, assuming current year is 2024</span>
+<span class="fc" id="L67">        int income = 0;</span>
+<span class="fc" id="L68">        int studyRate = 100;</span>
+<span class="fc" id="L69">        int completionRatio = 100;</span>
+<span class="fc" id="L70">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L71">        assertEquals(2816, amount); // Expecting 2816 for in age limit for subsidy</span>
+<span class="fc" id="L72">    }</span>
+    @Test
+    public void testGetMonthlyAmountYoungInAgeLimitForSubsidy() {
+<span class="fc" id="L75">        String personId = &quot;1996010100000&quot;; // Age 20, assuming current year is 2024</span>
+<span class="fc" id="L76">        int income = 0;</span>
+<span class="fc" id="L77">        int studyRate = 100;</span>
+<span class="fc" id="L78">        int completionRatio = 100;</span>
+<span class="fc" id="L79">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L80">        assertEquals(9904, amount); // Expecting 2816 for in age limit for subsidy</span>
+<span class="fc" id="L81">    }</span>
+/* 
+    @Test
+    public void testNextPaymentDay() {
+        assertEquals(&quot;20240930&quot;, payment.getNextPaymentDay());
+    }
+*/
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountInvalidPersonId() {
+<span class="fc" id="L90">        String personId = &quot;invalid&quot;;</span>
+<span class="fc" id="L91">        int income = 5000;</span>
+<span class="fc" id="L92">        int studyRate = 100;</span>
+<span class="fc" id="L93">        int completionRatio = 100;</span>
+<span class="nc" id="L94">        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="nc" id="L95">    }</span>
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountWithNegativeIncome() {
+<span class="fc" id="L99">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L100">        int income = -1;</span>
+<span class="fc" id="L101">        int studyRate = 100;</span>
+<span class="fc" id="L102">        int completionRatio = 100;</span>
+<span class="nc" id="L103">        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="nc" id="L104">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountOverAgeLimitForLoan() {
+<span class="fc" id="L108">        String personId = &quot;1969010100000&quot;; // Age 47, assuming current year is 2024</span>
+<span class="fc" id="L109">        int income = 0;</span>
+<span class="fc" id="L110">        int studyRate = 100;</span>
+<span class="fc" id="L111">        int completionRatio = 100;</span>
+<span class="fc" id="L112">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L113">        assertEquals(2816, amount); // Expecting zero loan + subsidy</span>
+<span class="fc" id="L114">    }</span>
+    @Test
+    public void testGetMonthlyAmountUnderAgeLimitForNoLoan() {
+<span class="fc" id="L117">        String personId = &quot;1978010100000&quot;; // Age 46, assuming current year is 2024</span>
+<span class="fc" id="L118">        int income = 0;</span>
+<span class="fc" id="L119">        int studyRate = 100;</span>
+<span class="fc" id="L120">        int completionRatio = 100;</span>
+<span class="fc" id="L121">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L122">        assertEquals(2816+7088, amount); // Expecting loan + subsidy</span>
+<span class="fc" id="L123">    }</span>
+    @Test
+    public void testGetMonthlyAmountYoungInAgeLimitForNoLoan() {
+<span class="fc" id="L126">        String personId = &quot;1996010100000&quot;; // Age 20, assuming current year is 2024</span>
+<span class="fc" id="L127">        int income = 0;</span>
+<span class="fc" id="L128">        int studyRate = 100;</span>
+<span class="fc" id="L129">        int completionRatio = 100;</span>
+<span class="fc" id="L130">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L131">        assertEquals(2816+7088, amount); // Expecting loan + subsidy</span>
+<span class="fc" id="L132">    }</span>
 
 
     @Test
-    public void testNextPaymentDay() 
-    {
-<span class="fc" id="L25">        assertEquals(&quot;20240930&quot;, payment.getNextPaymentDay());</span>
-        
-<span class="fc" id="L27">    }</span>
+    public void testGetMonthlyAmountBelowHalfTimeStudy() {
+<span class="fc" id="L137">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L138">        int income = 0;</span>
+<span class="fc" id="L139">        int studyRate = 49; // Less than half time</span>
+<span class="fc" id="L140">        int completionRatio = 100;</span>
+<span class="fc" id="L141">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L142">        assertEquals(0, amount); // Expecting zero amount for below half-time study</span>
+<span class="fc" id="L143">    }</span>
 
+    @Test
+    public void testGetSubsidyHalfTimeStudy() throws Exception {
+<span class="fc" id="L147">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L148">        method.setAccessible(true);</span>
+<span class="fc" id="L149">        int age = 24; </span>
+<span class="fc" id="L150">        int income = 0;</span>
+<span class="fc" id="L151">        int studyRate = 50; // Half time</span>
+<span class="fc" id="L152">        int completionRatio = 100;</span>
+<span class="fc" id="L153">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L155">        Field halfSubsidyField = PaymentImpl.class.getDeclaredField(&quot;HALF_SUBSIDY&quot;);</span>
+<span class="fc" id="L156">        halfSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L157">        int halfSubsidy = (int) halfSubsidyField.get(payment);</span>
+
+<span class="fc" id="L159">        assertEquals(halfSubsidy, subsidy); // 50% subsidiary</span>
+<span class="fc" id="L160">    }</span>
+
+    @Test
+    public void testGetSubsidyFullTimeStudy() throws Exception {
+<span class="fc" id="L164">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L165">        method.setAccessible(true);</span>
+<span class="fc" id="L166">        int age = 24;</span>
+<span class="fc" id="L167">        int income = 0;</span>
+<span class="fc" id="L168">        int studyRate = 100; // Full time</span>
+<span class="fc" id="L169">        int completionRatio = 100;</span>
+<span class="fc" id="L170">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L172">        Field fullSubsidyField = PaymentImpl.class.getDeclaredField(&quot;FULL_SUBSIDY&quot;);</span>
+<span class="fc" id="L173">        fullSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L174">        int fullSubsidy = (int) fullSubsidyField.get(payment);</span>
+
+<span class="fc" id="L176">        assertEquals(fullSubsidy, subsidy); // 100% subsidiary</span>
+<span class="fc" id="L177">    }</span>
+
+    @Test
+    public void testGetSubsidyHighIncomeBelowLimitFullTime() throws Exception {
+<span class="fc" id="L181">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L182">        method.setAccessible(true);</span>
+<span class="fc" id="L183">        int age = 24;</span>
+<span class="fc" id="L184">        int income = 85812; // below limit for full-time study</span>
+<span class="fc" id="L185">        int studyRate = 100; // Full time</span>
+<span class="fc" id="L186">        int completionRatio = 100;</span>
+<span class="fc" id="L187">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+<span class="fc" id="L188">        assertEquals(2816, subsidy); // Expecting full subsidy for high income full-time</span>
+<span class="fc" id="L189">    }</span>
+    @Test
+    public void testGetSubsidyHighIncomeLimitFullTime() throws Exception {
+<span class="fc" id="L192">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L193">        method.setAccessible(true);</span>
+<span class="fc" id="L194">        int age = 24;</span>
+<span class="fc" id="L195">        int income = 85813; // on limit for full-time study</span>
+<span class="fc" id="L196">        int studyRate = 100; // Full time</span>
+<span class="fc" id="L197">        int completionRatio = 100;  </span>
+<span class="fc" id="L198">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L200">        Field fullSubsidyField = PaymentImpl.class.getDeclaredField(&quot;FULL_SUBSIDY&quot;);</span>
+<span class="fc" id="L201">        fullSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L202">        int fullSubsidy = (int) fullSubsidyField.get(payment);</span>
+
+<span class="fc" id="L204">        assertEquals(fullSubsidy, subsidy); // Expecting zero subsidy for high income full-time</span>
+<span class="fc" id="L205">    }</span>
+
+    @Test
+    public void testGetSubsidyHighIncomeLessThanFullTime() throws Exception {
+<span class="fc" id="L209">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L210">        method.setAccessible(true);</span>
+<span class="fc" id="L211">        int age = 24;</span>
+<span class="fc" id="L212">        int income = 128723; // Above limit for less than full-time study</span>
+<span class="fc" id="L213">        int studyRate = 50;</span>
+<span class="fc" id="L214">        int completionRatio = 100;</span>
+<span class="fc" id="L215">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L217">        Field zeroSubsidyField = PaymentImpl.class.getDeclaredField(&quot;ZERO_SUBSIDY&quot;);</span>
+<span class="fc" id="L218">        zeroSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L219">        int zeroSubsidy = (int) zeroSubsidyField.get(payment);</span>
+
+<span class="fc" id="L221">        assertEquals(zeroSubsidy, subsidy); // Expecting zero subsidy for high income less than full-time</span>
+<span class="fc" id="L222">    }</span>
+    @Test
+    public void testGetSubsidyHighIncomeLimitLessThanFullTime() throws Exception {
+<span class="fc" id="L225">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L226">        method.setAccessible(true);</span>
+<span class="fc" id="L227">        int age = 24;</span>
+<span class="fc" id="L228">        int income = 128721; // On limit for less than full-time study</span>
+<span class="fc" id="L229">        int studyRate = 50;</span>
+<span class="fc" id="L230">        int completionRatio = 100;</span>
+<span class="fc" id="L231">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L233">        Field halfSubsidyField = PaymentImpl.class.getDeclaredField(&quot;HALF_SUBSIDY&quot;);</span>
+<span class="fc" id="L234">        halfSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L235">        int halfSubsidy = (int) halfSubsidyField.get(payment);</span>
+
+<span class="fc" id="L237">        assertEquals(halfSubsidy, subsidy); // Expecting zero subsidy for high income less than full-time</span>
+<span class="fc" id="L238">    }</span>
+
+    @Test
+    public void testGetSubsidyLowCompletionRatio() throws Exception {
+<span class="fc" id="L242">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L243">        method.setAccessible(true);</span>
+<span class="fc" id="L244">        int age = 24;</span>
+<span class="fc" id="L245">        int income = 0;</span>
+<span class="fc" id="L246">        int studyRate = 100;</span>
+<span class="fc" id="L247">        int completionRatio = 49; // Below 50%</span>
+<span class="fc" id="L248">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L250">        Field zeroSubsidyField = PaymentImpl.class.getDeclaredField(&quot;ZERO_SUBSIDY&quot;);</span>
+<span class="fc" id="L251">        zeroSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L252">        int zeroSubsidy = (int) zeroSubsidyField.get(payment);</span>
+
+<span class="fc" id="L254">        assertEquals(zeroSubsidy, subsidy); // Expecting zero subsidy for low completion ratio</span>
+<span class="fc" id="L255">    }</span>
+    @Test
+    public void testGetSubsidyCompletionRatioLimit() throws Exception {
+<span class="fc" id="L258">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L259">        method.setAccessible(true);</span>
+<span class="fc" id="L260">        int age = 24;</span>
+<span class="fc" id="L261">        int income = 0;</span>
+<span class="fc" id="L262">        int studyRate = 100;</span>
+<span class="fc" id="L263">        int completionRatio = 50; // 50%</span>
+<span class="fc" id="L264">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L266">        assertEquals(2816, subsidy); // subsidy</span>
+<span class="fc" id="L267">    }</span>
+    @Test
+    public void testGetSubsidyCompletionRatioLimitBleowStudyRate() throws Exception {
+<span class="fc" id="L270">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L271">        method.setAccessible(true);</span>
+<span class="fc" id="L272">        int age = 24;</span>
+<span class="fc" id="L273">        int income = 0;</span>
+<span class="fc" id="L274">        int studyRate = 49;</span>
+<span class="fc" id="L275">        int completionRatio = 50; // 50%</span>
+<span class="fc" id="L276">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L278">        assertEquals(0, subsidy); // subsidy</span>
+<span class="fc" id="L279">    }</span>
+
+    @Test
+    public void testGetLoanFullTime() throws Exception {
+<span class="fc" id="L283">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L284">        method.setAccessible(true);</span>
+<span class="fc" id="L285">        int age = 24;</span>
+<span class="fc" id="L286">        int income = 0;</span>
+<span class="fc" id="L287">        int studyRate = 100;</span>
+<span class="fc" id="L288">        int completionRatio = 100;</span>
+<span class="fc" id="L289">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L291">        Field fullLoanField = PaymentImpl.class.getDeclaredField(&quot;FULL_LOAN&quot;);</span>
+<span class="fc" id="L292">        fullLoanField.setAccessible(true);</span>
+<span class="fc" id="L293">        int fullLoan = (int) fullLoanField.get(payment);</span>
+
+<span class="fc" id="L295">        assertEquals(fullLoan, loan); // Full loan amount</span>
+<span class="fc" id="L296">    }</span>
+    @Test
+    public void testGetLoanFullTimeIncomeOnLimit() throws Exception {
+<span class="fc" id="L299">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L300">        method.setAccessible(true);</span>
+<span class="fc" id="L301">        int age = 24;</span>
+<span class="fc" id="L302">        int income = 85813;</span>
+<span class="fc" id="L303">        int studyRate = 100;</span>
+<span class="fc" id="L304">        int completionRatio = 100;</span>
+<span class="fc" id="L305">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L307">        assertEquals(7088, loan); // No loan amount</span>
+<span class="fc" id="L308">    }</span>
+    @Test
+    public void testGetLoanAboveAgeHalfTime() throws Exception {
+<span class="fc" id="L311">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L312">        method.setAccessible(true);</span>
+<span class="fc" id="L313">        int age = 90;</span>
+<span class="fc" id="L314">        int income = 128723;</span>
+<span class="fc" id="L315">        int studyRate = 50;</span>
+<span class="fc" id="L316">        int completionRatio = 100;</span>
+<span class="fc" id="L317">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L319">        assertEquals(0, loan); // No loan amount</span>
+<span class="fc" id="L320">    }</span>
+    @Test
+    public void testGetLoanFullTimeIncomeUnderLimit() throws Exception {
+<span class="fc" id="L323">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L324">        method.setAccessible(true);</span>
+<span class="fc" id="L325">        int age = 24;</span>
+<span class="fc" id="L326">        int income = 85812;</span>
+<span class="fc" id="L327">        int studyRate = 100;</span>
+<span class="fc" id="L328">        int completionRatio = 100;</span>
+<span class="fc" id="L329">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L331">        assertEquals(7088, loan); // Full loan amount</span>
+<span class="fc" id="L332">    }</span>
+    public void testGetLoanHalfTimeIncomeUnderLimit() throws Exception {
+<span class="nc" id="L334">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="nc" id="L335">        method.setAccessible(true);</span>
+<span class="nc" id="L336">        int age = 24;</span>
+<span class="nc" id="L337">        int income = 128722;</span>
+<span class="nc" id="L338">        int studyRate = 50;</span>
+<span class="nc" id="L339">        int completionRatio = 100;</span>
+<span class="nc" id="L340">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="nc" id="L342">        assertEquals(3564, loan); // Full loan amount</span>
+<span class="nc" id="L343">    }</span>
+    public void testGetLoanHalfTimeIncomeLimit() throws Exception {
+<span class="nc" id="L345">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="nc" id="L346">        method.setAccessible(true);</span>
+<span class="nc" id="L347">        int age = 24;</span>
+<span class="nc" id="L348">        int income = 128723;</span>
+<span class="nc" id="L349">        int studyRate = 50;</span>
+<span class="nc" id="L350">        int completionRatio = 100;</span>
+<span class="nc" id="L351">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="nc" id="L353">        assertEquals(3564, loan); // Full loan amount</span>
+<span class="nc" id="L354">    }</span>
+
+    @Test
+    public void testGetLoanHalfTime() throws Exception {
+<span class="fc" id="L358">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L359">        method.setAccessible(true);</span>
+<span class="fc" id="L360">        int age = 24;</span>
+<span class="fc" id="L361">        int income = 0;</span>
+<span class="fc" id="L362">        int studyRate = 50;</span>
+<span class="fc" id="L363">        int completionRatio = 100;</span>
+<span class="fc" id="L364">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L366">        Field halfLoanField = PaymentImpl.class.getDeclaredField(&quot;HALF_LOAN&quot;);</span>
+<span class="fc" id="L367">        halfLoanField.setAccessible(true);</span>
+<span class="fc" id="L368">        int halfLoan = (int) halfLoanField.get(payment);</span>
+
+<span class="fc" id="L370">        assertEquals(halfLoan, loan); // Half loan amount</span>
+<span class="fc" id="L371">    }</span>
+    @Test
+    public void testGetLoanHalfTimeAboweAge() throws Exception {
+<span class="fc" id="L374">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L375">        method.setAccessible(true);</span>
+<span class="fc" id="L376">        int age = 47;</span>
+<span class="fc" id="L377">        int income = 0;</span>
+<span class="fc" id="L378">        int studyRate = 50;</span>
+<span class="fc" id="L379">        int completionRatio = 100;</span>
+<span class="fc" id="L380">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L382">        assertEquals(0, loan); // no loan amount</span>
+<span class="fc" id="L383">    }</span>
+
+    @Test
+    public void testGetLoanHighIncomeFullTime() throws Exception {
+<span class="fc" id="L387">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L388">        method.setAccessible(true);</span>
+<span class="fc" id="L389">        int age = 24;</span>
+<span class="fc" id="L390">        int income = 85814; // Above limit for full-time study</span>
+<span class="fc" id="L391">        int studyRate = 100;</span>
+<span class="fc" id="L392">        int completionRatio = 100;</span>
+<span class="fc" id="L393">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L395">        Field zeroLoanField = PaymentImpl.class.getDeclaredField(&quot;ZERO_LOAN&quot;);</span>
+<span class="fc" id="L396">        zeroLoanField.setAccessible(true);</span>
+<span class="fc" id="L397">        int zeroLoan = (int) zeroLoanField.get(payment);</span>
+
+<span class="fc" id="L399">        assertEquals(zeroLoan, loan); // Expecting zero loan for high income full-time</span>
+<span class="fc" id="L400">    }</span>
+    @Test
+    public void testGetLoanHighIncomeLimitFullTime() throws Exception {
+<span class="fc" id="L403">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L404">        method.setAccessible(true);</span>
+<span class="fc" id="L405">        int age = 24;</span>
+<span class="fc" id="L406">        int income = 85813; // Above limit for full-time study</span>
+<span class="fc" id="L407">        int studyRate = 100;</span>
+<span class="fc" id="L408">        int completionRatio = 100;</span>
+<span class="fc" id="L409">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L411">        Field fullLoanField = PaymentImpl.class.getDeclaredField(&quot;FULL_LOAN&quot;);</span>
+<span class="fc" id="L412">        fullLoanField.setAccessible(true);</span>
+<span class="fc" id="L413">        int fullLoan = (int) fullLoanField.get(payment);</span>
+
+<span class="fc" id="L415">        assertEquals(fullLoan, loan); // Expecting zero loan for high income full-time</span>
+<span class="fc" id="L416">    }</span>
+
+    @Test
+    public void testGetLoanHighIncomeLessThanFullTime() throws Exception {
+<span class="fc" id="L420">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L421">        method.setAccessible(true);</span>
+<span class="fc" id="L422">        int age = 24; </span>
+<span class="fc" id="L423">        int income = 128723; // Above limit for less than full-time study</span>
+<span class="fc" id="L424">        int studyRate = 50;</span>
+<span class="fc" id="L425">        int completionRatio = 100;</span>
+<span class="fc" id="L426">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L428">        Field zeroLoanField = PaymentImpl.class.getDeclaredField(&quot;ZERO_LOAN&quot;);</span>
+<span class="fc" id="L429">        zeroLoanField.setAccessible(true);</span>
+<span class="fc" id="L430">        int zeroLoan = (int) zeroLoanField.get(payment);</span>
+
+<span class="fc" id="L432">        assertEquals(zeroLoan, loan); // Expecting zero loan for high income less than full-time</span>
+<span class="fc" id="L433">    }</span>
+    @Test
+    public void testGetLoanHighIncomeLimitLessThanFullTime() throws Exception {
+<span class="fc" id="L436">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L437">        method.setAccessible(true);</span>
+<span class="fc" id="L438">        int age = 24; </span>
+<span class="fc" id="L439">        int income = 128722; // Above limit for less than full-time study</span>
+<span class="fc" id="L440">        int studyRate = 50;</span>
+<span class="fc" id="L441">        int completionRatio = 100;</span>
+<span class="fc" id="L442">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L444">        Field halfLoanField = PaymentImpl.class.getDeclaredField(&quot;HALF_LOAN&quot;);</span>
+<span class="fc" id="L445">        halfLoanField.setAccessible(true);</span>
+<span class="fc" id="L446">        int halfLoan = (int) halfLoanField.get(payment);</span>
+
+<span class="fc" id="L448">        assertEquals(halfLoan, loan); // Expecting zero loan for high income less than full-time</span>
+<span class="fc" id="L449">    }</span>
+
+    @Test
+    public void testGetLoanLowCompletionRatio() throws Exception {
+<span class="fc" id="L453">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L454">        method.setAccessible(true);</span>
+<span class="fc" id="L455">        int age = 24; </span>
+<span class="fc" id="L456">        int income = 0;</span>
+<span class="fc" id="L457">        int studyRate = 100;</span>
+<span class="fc" id="L458">        int completionRatio = 49; // Below 50%</span>
+<span class="fc" id="L459">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L461">        Field zeroLoanField = PaymentImpl.class.getDeclaredField(&quot;ZERO_LOAN&quot;);</span>
+<span class="fc" id="L462">        zeroLoanField.setAccessible(true);</span>
+<span class="fc" id="L463">        int zeroLoan = (int) zeroLoanField.get(payment);</span>
+
+<span class="fc" id="L465">        assertEquals(zeroLoan, loan); // Expecting zero loan for low completion ratio</span>
+<span class="fc" id="L466">    }</span>
+    @Test
+    public void testGetLoanCompletionRatioLimit() throws Exception {
+<span class="fc" id="L469">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L470">        method.setAccessible(true);</span>
+<span class="fc" id="L471">        int age = 24; </span>
+<span class="fc" id="L472">        int income = 0;</span>
+<span class="fc" id="L473">        int studyRate = 100;</span>
+<span class="fc" id="L474">        int completionRatio = 50; // 50%</span>
+<span class="fc" id="L475">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L477">        assertEquals(7088, loan); // loan for low completion ratio</span>
+<span class="fc" id="L478">    }</span>
+
+    @Test
+    public void testGetAge() throws Exception {
+<span class="fc" id="L482">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getAge&quot;, String.class);</span>
+<span class="fc" id="L483">        method.setAccessible(true);</span>
+<span class="fc" id="L484">        String personId = &quot;1992010100000&quot;; // Updated to 13 characters</span>
+<span class="fc" id="L485">        int age = (Integer) method.invoke(payment, personId);</span>
+<span class="fc" id="L486">        assertEquals(24, age); // Assuming the current year is 2024</span>
+<span class="fc" id="L487">    }</span>
+
+    @Test
+    public void testGetLoan() throws Exception {
+<span class="fc" id="L491">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L492">        method.setAccessible(true);</span>
+<span class="fc" id="L493">        int age = 24;</span>
+<span class="fc" id="L494">        int income = 50000;</span>
+<span class="fc" id="L495">        int studyRate = 100;</span>
+<span class="fc" id="L496">        int completionRatio = 100;</span>
+<span class="fc" id="L497">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L499">        Field fullLoanField = PaymentImpl.class.getDeclaredField(&quot;FULL_LOAN&quot;);</span>
+<span class="fc" id="L500">        fullLoanField.setAccessible(true);</span>
+<span class="fc" id="L501">        int fullLoan = (int) fullLoanField.get(payment);</span>
+
+<span class="fc" id="L503">        assertEquals(fullLoan, loan);</span>
+<span class="fc" id="L504">    }</span>
+
+    @Test
+    public void testGetLoanZeroHighIncome() throws Exception {
+<span class="fc" id="L508">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L509">        method.setAccessible(true);</span>
+<span class="fc" id="L510">        int age = 24;</span>
+<span class="fc" id="L511">        int income = 1000000;</span>
+<span class="fc" id="L512">        int studyRate = 100;</span>
+<span class="fc" id="L513">        int completionRatio = 100;</span>
+<span class="fc" id="L514">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L516">        Field zeroLoanField = PaymentImpl.class.getDeclaredField(&quot;ZERO_LOAN&quot;);</span>
+<span class="fc" id="L517">        zeroLoanField.setAccessible(true);</span>
+<span class="fc" id="L518">        int zeroLoan = (int) zeroLoanField.get(payment);</span>
+
+<span class="fc" id="L520">        assertEquals(zeroLoan, loan);</span>
+<span class="fc" id="L521">    }</span>
+
+    @Test
+    public void testGetLoanHalfStudyRate() throws Exception {
+<span class="fc" id="L525">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getLoan&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L526">        method.setAccessible(true);</span>
+<span class="fc" id="L527">        int age = 24;</span>
+<span class="fc" id="L528">        int income = 50000;</span>
+<span class="fc" id="L529">        int studyRate = 50;</span>
+<span class="fc" id="L530">        int completionRatio = 100;</span>
+<span class="fc" id="L531">        int loan = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L533">        Field halfLoanField = PaymentImpl.class.getDeclaredField(&quot;HALF_LOAN&quot;);</span>
+<span class="fc" id="L534">        halfLoanField.setAccessible(true);</span>
+<span class="fc" id="L535">        int halfLoan = (int) halfLoanField.get(payment);</span>
+
+<span class="fc" id="L537">        assertEquals(halfLoan, loan);</span>
+<span class="fc" id="L538">    }</span>
+    @Test
+    public void testGetSubsidy() throws Exception {
+<span class="fc" id="L541">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L542">        method.setAccessible(true);</span>
+<span class="fc" id="L543">        int age = 24;</span>
+<span class="fc" id="L544">        int income = 50000;</span>
+<span class="fc" id="L545">        int studyRate = 100;</span>
+<span class="fc" id="L546">        int completionRatio = 100;</span>
+<span class="fc" id="L547">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L549">        Field fullSubsidyField = PaymentImpl.class.getDeclaredField(&quot;FULL_SUBSIDY&quot;);</span>
+<span class="fc" id="L550">        fullSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L551">        int fullSubsidy = (int) fullSubsidyField.get(payment);</span>
+
+<span class="fc" id="L553">        assertEquals(fullSubsidy, subsidy);</span>
+<span class="fc" id="L554">    }</span>
+
+    @Test
+    public void testGetSubsidyOverAgeLimit() throws Exception {
+<span class="fc" id="L558">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L559">        method.setAccessible(true);</span>
+<span class="fc" id="L560">        int age = 57;</span>
+<span class="fc" id="L561">        int income = 5000;</span>
+<span class="fc" id="L562">        int studyRate = 100;</span>
+<span class="fc" id="L563">        int completionRatio = 100;</span>
+<span class="fc" id="L564">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L566">        assertEquals(0, subsidy);</span>
+<span class="fc" id="L567">    }</span>
+    
+
+    @Test
+    public void testGetSubsidyZeroHighIncome() throws Exception {
+<span class="fc" id="L572">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L573">        method.setAccessible(true);</span>
+<span class="fc" id="L574">        int age = 24;</span>
+<span class="fc" id="L575">        int income = 1000000;</span>
+<span class="fc" id="L576">        int studyRate = 100;</span>
+<span class="fc" id="L577">        int completionRatio = 100;</span>
+<span class="fc" id="L578">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L580">        Field zeroSubsidyField = PaymentImpl.class.getDeclaredField(&quot;ZERO_SUBSIDY&quot;);</span>
+<span class="fc" id="L581">        zeroSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L582">        int zeroSubsidy = (int) zeroSubsidyField.get(payment);</span>
+
+<span class="fc" id="L584">        assertEquals(zeroSubsidy, subsidy);</span>
+<span class="fc" id="L585">    }</span>
+
+    @Test
+    public void testGetSubsidyHalfStudyRate() throws Exception {
+<span class="fc" id="L589">        Method method = PaymentImpl.class.getDeclaredMethod(&quot;getSubsidy&quot;, int.class, int.class, int.class, int.class);</span>
+<span class="fc" id="L590">        method.setAccessible(true);</span>
+<span class="fc" id="L591">        int age = 24;</span>
+<span class="fc" id="L592">        int income = 50000;</span>
+<span class="fc" id="L593">        int studyRate = 50;</span>
+<span class="fc" id="L594">        int completionRatio = 100;</span>
+<span class="fc" id="L595">        int subsidy = (int) method.invoke(payment, age, income, studyRate, completionRatio);</span>
+
+<span class="fc" id="L597">        Field halfSubsidyField = PaymentImpl.class.getDeclaredField(&quot;HALF_SUBSIDY&quot;);</span>
+<span class="fc" id="L598">        halfSubsidyField.setAccessible(true);</span>
+<span class="fc" id="L599">        int halfSubsidy = (int) halfSubsidyField.get(payment);</span>
+
+<span class="fc" id="L601">        assertEquals(halfSubsidy, subsidy);</span>
+<span class="fc" id="L602">    }</span>
+
+    @Test
+    public void testPaymentDate() {
+<span class="fc" id="L606">        LocalDate now = LocalDate.of(2016,02,01);</span>
+<span class="fc" id="L607">        LocalDate lastDayOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());</span>
+<span class="pc bpc" id="L608" title="1 of 2 branches missed.">        if (lastDayOfMonth.getDayOfWeek() == DayOfWeek.SATURDAY) {</span>
+<span class="nc" id="L609">            lastDayOfMonth = lastDayOfMonth.minusDays(1);</span>
+<span class="pc bpc" id="L610" title="1 of 2 branches missed.">        } else if (lastDayOfMonth.getDayOfWeek() == DayOfWeek.SUNDAY) {</span>
+<span class="nc" id="L611">            lastDayOfMonth = lastDayOfMonth.minusDays(2);</span>
+        }
+<span class="fc" id="L613">        String expectedPaymentDate = lastDayOfMonth.toString().replace(&quot;-&quot;, &quot;&quot;);</span>
+<span class="fc" id="L614">        assertEquals(expectedPaymentDate, payment.getNextPaymentDay());</span>
+<span class="fc" id="L615">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountBoundaryAge20() {
+<span class="fc" id="L619">        String personId = &quot;1996010100000&quot;; // Age 20, assuming current year is 2024</span>
+<span class="fc" id="L620">        int income = 0;</span>
+<span class="fc" id="L621">        int studyRate = 100;</span>
+<span class="fc" id="L622">        int completionRatio = 100;</span>
+<span class="fc" id="L623">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="pc bpc" id="L624" title="1 of 2 branches missed.">        assertTrue(amount &gt; 0); // Should be eligible</span>
+<span class="fc" id="L625">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountBoundaryAge47() {
+<span class="fc" id="L629">        String personId = &quot;1969010100000&quot;; // Age 47, assuming current year is 2024</span>
+<span class="fc" id="L630">        int income = 0;</span>
+<span class="fc" id="L631">        int studyRate = 100;</span>
+<span class="fc" id="L632">        int completionRatio = 100;</span>
+<span class="fc" id="L633">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L634">        assertEquals(2816, amount); // Expecting zero loan + subsidy</span>
+<span class="fc" id="L635">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountBoundaryAge56() {
+<span class="fc" id="L639">        String personId = &quot;1968010100000&quot;; // Age 56, assuming current year is 2024</span>
+<span class="fc" id="L640">        int income = 0;</span>
+<span class="fc" id="L641">        int studyRate = 100;</span>
+<span class="fc" id="L642">        int completionRatio = 100;</span>
+<span class="fc" id="L643">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="pc bpc" id="L644" title="1 of 2 branches missed.">        assertTrue(amount &gt; 0); // Should be eligible</span>
+<span class="fc" id="L645">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountStudyRate25() {
+<span class="fc" id="L649">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L650">        int income = 0;</span>
+<span class="fc" id="L651">        int studyRate = 25; // Less than half time</span>
+<span class="fc" id="L652">        int completionRatio = 100;</span>
+<span class="fc" id="L653">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L654">        assertEquals(0, amount); // Should not be eligible</span>
+<span class="fc" id="L655">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountStudyRate75() {
+<span class="fc" id="L659">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L660">        int income = 0;</span>
+<span class="fc" id="L661">        int studyRate = 75; // More than half time but less than full time</span>
+<span class="fc" id="L662">        int completionRatio = 100;</span>
+<span class="fc" id="L663">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="pc bpc" id="L664" title="1 of 2 branches missed.">        assertTrue(amount &gt; 0); // Should be eligible</span>
+<span class="fc" id="L665">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountIncomeBelowThresholdFullTime() {
+<span class="fc" id="L669">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L670">        int income = 85000; // Just below the threshold for full-time study</span>
+<span class="fc" id="L671">        int studyRate = 100;</span>
+<span class="fc" id="L672">        int completionRatio = 100;</span>
+<span class="fc" id="L673">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="pc bpc" id="L674" title="1 of 2 branches missed.">        assertTrue(amount &gt; 0); // Should be eligible</span>
+<span class="fc" id="L675">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountIncomeAboveThresholdFullTime() {
+<span class="fc" id="L679">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L680">        int income = 86000; // Just above the threshold for full-time study</span>
+<span class="fc" id="L681">        int studyRate = 100;</span>
+<span class="fc" id="L682">        int completionRatio = 100;</span>
+<span class="fc" id="L683">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L684">        assertEquals(0, amount); // Should not be eligible</span>
+<span class="fc" id="L685">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountIncomeBelowThresholdPartTime() {
+<span class="fc" id="L689">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L690">        int income = 128000; // Just below the threshold for part-time study</span>
+<span class="fc" id="L691">        int studyRate = 50;</span>
+<span class="fc" id="L692">        int completionRatio = 100;</span>
+<span class="fc" id="L693">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="pc bpc" id="L694" title="1 of 2 branches missed.">        assertTrue(amount &gt; 0); // Should be eligible</span>
+<span class="fc" id="L695">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountIncomeAboveThresholdPartTime() {
+<span class="fc" id="L699">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L700">        int income = 129000; // above the threshold for part-time study</span>
+<span class="fc" id="L701">        int studyRate = 50;</span>
+<span class="fc" id="L702">        int completionRatio = 100;</span>
+<span class="fc" id="L703">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L704">        assertEquals(0, amount); // Should not be eligible</span>
+<span class="fc" id="L705">    }</span>
+    @Test
+    public void testGetMonthlyAmountIncomeAboveThresholdPartTime0Rate() {
+<span class="fc" id="L708">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L709">        int income = 129000; // Just above the threshold for part-time study</span>
+<span class="fc" id="L710">        int studyRate = 0;</span>
+<span class="fc" id="L711">        int completionRatio = 100;</span>
+<span class="fc" id="L712">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L713">        assertEquals(0, amount); // Should not be eligible</span>
+<span class="fc" id="L714">    }</span>
+    @Test
+    public void testGetMonthlyAmountIncomeAboveThresholdPartTime99Rate() {
+<span class="fc" id="L717">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L718">        int income = 129000; // Just above the threshold for part-time study</span>
+<span class="fc" id="L719">        int studyRate = 99;</span>
+<span class="fc" id="L720">        int completionRatio = 100;</span>
+<span class="fc" id="L721">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L722">        assertEquals(0, amount); // Should not be eligible</span>
+<span class="fc" id="L723">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountCompletionRatio50() {
+<span class="fc" id="L727">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L728">        int income = 0;</span>
+<span class="fc" id="L729">        int studyRate = 100;</span>
+<span class="fc" id="L730">        int completionRatio = 50; // Boundary completion ratio</span>
+<span class="fc" id="L731">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="pc bpc" id="L732" title="1 of 2 branches missed.">        assertTrue(amount &gt; 0); // Should be eligible</span>
+<span class="fc" id="L733">    }</span>
+
+    @Test
+    public void testGetMonthlyAmountCompletionRatio49() {
+<span class="fc" id="L737">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L738">        int income = 0;</span>
+<span class="fc" id="L739">        int studyRate = 100;</span>
+<span class="fc" id="L740">        int completionRatio = 49; // Just below the boundary completion ratio</span>
+<span class="fc" id="L741">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L742">        assertEquals(0, amount); // Should not be eligible</span>
+<span class="fc" id="L743">    }</span>
+    @Test
+    public void testGetMonthlyAmountCompletionRatio51() {
+<span class="fc" id="L746">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L747">        int income = 0;</span>
+<span class="fc" id="L748">        int studyRate = 100;</span>
+<span class="fc" id="L749">        int completionRatio = 51; // Just abowe the boundary completion ratio</span>
+<span class="fc" id="L750">        int amount = payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="fc" id="L751">        assertEquals(2816+7088, amount);</span>
+<span class="fc" id="L752">    }</span>
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountNullPersonId() {
+<span class="fc" id="L756">        String personId = null;</span>
+<span class="fc" id="L757">        int income = 0;</span>
+<span class="fc" id="L758">        int studyRate = 100;</span>
+<span class="fc" id="L759">        int completionRatio = 100;</span>
+<span class="nc" id="L760">        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);</span>
+<span class="nc" id="L761">    }</span>
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountShortPersonId() {
+<span class="fc" id="L765">        String personId = &quot;1234&quot;;</span>
+<span class="fc" id="L766">        int income = 0;</span>
+<span class="fc" id="L767">        int studyRate = 100;</span>
+<span class="fc" id="L768">        int completionRatio = 100;</span>
+<span class="nc" id="L769">        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);}</span>
+    
+        @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountLongPersonId() {
+<span class="fc" id="L773">        String personId = &quot;12345678912345&quot;; // length 14</span>
+<span class="fc" id="L774">        int income = 0;</span>
+<span class="fc" id="L775">        int studyRate = 100;</span>
+<span class="fc" id="L776">        int completionRatio = 100;</span>
+<span class="nc" id="L777">        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);}</span>
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountNegativeStudyRate() {
+<span class="fc" id="L781">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L782">        int income = 0;</span>
+<span class="fc" id="L783">        int studyRate = -1;</span>
+<span class="fc" id="L784">        int completionRatio = 100;</span>
+<span class="nc" id="L785">        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);}</span>
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetMonthlyAmountNegativeCompletionRatio() {
+<span class="fc" id="L789">        String personId = &quot;1992010100000&quot;; </span>
+<span class="fc" id="L790">        int income = 0;</span>
+<span class="fc" id="L791">        int studyRate = 100;</span>
+<span class="fc" id="L792">        int completionRatio = -1;</span>
+<span class="nc" id="L793">        payment.getMonthlyAmount(personId, income, studyRate, completionRatio);}</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

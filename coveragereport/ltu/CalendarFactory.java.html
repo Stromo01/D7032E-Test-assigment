@@ -12,17 +12,17 @@
     }
 
     public static ICalendar getCalendar(String className) {
-<span class="nc" id="L15">        return initCalendar(className);</span>
+<span class="fc" id="L15">        return initCalendar(className);</span>
     }
 
     private static ICalendar initCalendar(String className) {
         try
         {
 <span class="fc" id="L21">            calendar = (ICalendar) Class.forName(className).newInstance();</span>
-<span class="nc" id="L22">        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e)</span>
+<span class="pc" id="L22">        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e)</span>
         {
 <span class="nc" id="L24">            e.printStackTrace();</span>
-<span class="fc" id="L25">        }</span>
+        }
 <span class="fc" id="L26">        return calendar;</span>
     }
 }
